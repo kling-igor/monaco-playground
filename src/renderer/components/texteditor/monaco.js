@@ -146,8 +146,8 @@ export class MonacoEditor extends Component {
   componentDidUpdate(prevProps) {
     console.log('MonacoEditor: componentDidUpdate ', this.uuid)
 
-    if (this.file !== this.props.file) {
-      if (this.editor) {
+    if (this.editor) {
+      if (this.file !== this.props.file) {
         let viewState = this.editor.saveViewState()
         this.file.saveEditorViewState(viewState)
 
@@ -164,6 +164,14 @@ export class MonacoEditor extends Component {
 
         this.editor.focus()
       }
+
+      if (this.props.width !== prevProps.width || this.props.height !== prevProps.height) {
+        this.editor.layout()
+      }
+
+      if (prevProps.options !== this.props.options) {
+        this.editor.updateOptions(this.props.options)
+      }
     }
 
     if (prevProps.language !== this.props.language) {
@@ -171,15 +179,8 @@ export class MonacoEditor extends Component {
     }
 
     if (prevProps.theme !== this.props.theme) {
+      monaco.editor.defineTheme(this.props.theme, this.props.themeDefinition)
       monaco.editor.setTheme(this.props.theme)
-    }
-
-    if (this.editor && (this.props.width !== prevProps.width || this.props.height !== prevProps.height)) {
-      this.editor.layout()
-    }
-
-    if (prevProps.options !== this.props.options) {
-      this.editor.updateOptions(this.props.options)
     }
   }
 
