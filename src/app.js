@@ -106,7 +106,6 @@ const themes = [
 
 const GlobalStyle = createGlobalStyle`
   html {
-    
     height: 100%;
     margin: 0;
   }
@@ -218,6 +217,16 @@ class Project {
       this.theme = theme
     }
   }
+
+  getLinter = f => {
+    this.lintCode = f
+  }
+
+  fixFormatting = () => {
+    if (this.lintCode) {
+      this.lintCode(true)
+    }
+  }
 }
 
 const project = new Project()
@@ -237,7 +246,7 @@ class EditorView extends Component {
 
   render() {
     const {
-      project: { currentFile, theme }
+      project: { currentFile, theme, getLinter }
     } = this.props
 
     return (
@@ -257,6 +266,7 @@ class EditorView extends Component {
                 theme={theme.name}
                 themeDefinition={theme.definition}
                 onChange={this.onTextChange}
+                lintCode={getLinter}
               />
             )
           }}
@@ -275,7 +285,7 @@ class ToolBar extends Component {
 
   render() {
     const {
-      project: { changeFile, openedFiles }
+      project: { changeFile, openedFiles, fixFormatting }
     } = this.props
 
     return (
@@ -305,6 +315,9 @@ class ToolBar extends Component {
             )
           })}
         </ul>
+        <button type="button" onClick={fixFormatting}>
+          Fix Formatting
+        </button>
         <select defaultValue={this.props.project.theme.name} onChange={this.handleThemeSelect}>
           {themes.map(({ name }) => {
             return (

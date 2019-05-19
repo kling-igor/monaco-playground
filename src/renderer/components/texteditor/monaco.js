@@ -50,6 +50,8 @@ export class MonacoEditor extends Component {
 
     this.subscriptions = new CompositeDisposable()
 
+    props.lintCode(this.lintCode)
+
     this.component = <RootStyle className="react-monaco-editor-container" ref={this.containerRef} />
   }
 
@@ -114,8 +116,10 @@ export class MonacoEditor extends Component {
       // hasWidgetFocus
 
       this.worker.onmessage = ({ data: { markers, version, output } }) => {
+        console.log('GOT LINTER RESPONSE')
         const model = this.editor.getModel()
         if (model && model.getVersionId() === version) {
+          console.log('versions matched')
           // model.pushEditOperations(
           //   [],
           //   [
@@ -198,7 +202,8 @@ export class MonacoEditor extends Component {
     return options || {}
   }
 
-  lintCode = () => {
+  lintCode = (autofix = false) => {
+    console.log('MONCAO LINT CODE')
     // const model = this.editor.getModel();
 
     const model = this.file.monacoModel
@@ -210,7 +215,8 @@ export class MonacoEditor extends Component {
     this.worker.postMessage({
       code: model.getValue(),
       // Unique identifier to avoid displaying outdated validation
-      version: model.getVersionId()
+      version: model.getVersionId(),
+      autofix
     })
   }
 
