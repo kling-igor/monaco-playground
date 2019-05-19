@@ -1,10 +1,13 @@
-import React, { PureComponent } from 'react'
+import React, { Component } from 'react'
 import ResizeDetector from 'react-resize-detector'
 import styled, { createGlobalStyle } from 'styled-components'
 import dedent from 'dedent-preserving-indents'
 // https://blog.expo.io/building-a-code-editor-with-monaco-f84b3a06deaf
 // react-monaco-editor
 import { MonacoEditor } from './renderer/components/texteditor/monaco'
+
+import { observable, action } from 'mobx'
+import { observer } from 'mobx-react'
 
 import { File } from './renderer/file'
 
@@ -41,14 +44,17 @@ const GlobalStyle = createGlobalStyle`
   }
 `
 
-const fileContent = dedent`
+const file1Content = dedent`
 class A {
   constructor() {
 
   }
 }
 `
-const file = new File('/some/path.js', fileContent.join('\n'))
+
+const file2Content = dedent`
+console.log('HELLO WORLD')
+`
 
 const options = {
   selectOnLineNumbers: true
@@ -59,13 +65,15 @@ const ContainerStyle = styled.div`
   min-height: 100%;
   overflow: hidden;
   background-color: white;
+  display: flex;
+  flex-direction: column;
 `
 
 const EditorPane = styled.div`
   position: relative;
   top: 0px;
   left: 0px;
-  height: 100%;
+  height: calc(100% - 48px);
   width: 100%;
   right: 0px;
   bottom: 0px;
@@ -73,7 +81,39 @@ const EditorPane = styled.div`
   /* box-shadow: inset 0px 20px 20px -30px black; */
 `
 
-export default class App extends PureComponent {
+const ToolbarStyle = styled.div`
+  height: 48px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  background-color: yellow;
+`
+
+class Project {
+  @observable openedFiles = []
+
+  @observable currentFile = -1
+
+  constructor() {
+    this.openedFiles = [
+      new File('/some/file1.js', file1Content.join('\n')),
+      new File('/some/file2.js', file2Content.join('\n'))
+    ]
+
+    this.currentFile = 0
+  }
+
+  @action.bound
+  changeFile(index) {
+    if (index === this.currentFile) return
+    this.currentFile = index
+  }
+}
+
+const project = new Project()
+
+@observer
+export default class App extends Component {
   textEditorDidMount = (editor, monaco) => {
     // брать theme из props
     monaco.editor.defineTheme('Monokai', Monokai)
@@ -90,6 +130,23 @@ export default class App extends PureComponent {
       <>
         <GlobalStyle />
         <ContainerStyle>
+          <ToolbarStyle>
+            <p
+              onClick={() => {
+                project.changeFile(0)
+              }}
+            >
+              file1.js
+            </p>
+            &nbsp;
+            <p
+              onClick={() => {
+                project.changeFile(1)
+              }}
+            >
+              file2.js
+            </p>
+          </ToolbarStyle>
           <EditorPane>
             <ResizeDetector
               handleWidth
@@ -101,7 +158,7 @@ export default class App extends PureComponent {
                     width={width}
                     height={height}
                     language="javascript"
-                    file={file}
+                    file={project.openedFiles[project.currentFile]}
                     options={options}
                     onChange={this.onTextChange}
                     editorDidMount={this.textEditorDidMount}
