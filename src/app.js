@@ -6,7 +6,7 @@ import dedent from 'dedent-preserving-indents'
 // react-monaco-editor
 import { MonacoEditor } from './renderer/components/texteditor/monaco'
 
-import { observable, action } from 'mobx'
+import { observable, action, computed } from 'mobx'
 import { observer } from 'mobx-react'
 
 import { File } from './renderer/file'
@@ -90,9 +90,9 @@ const ToolbarStyle = styled.div`
 `
 
 class Project {
-  @observable openedFiles = []
+  @observable.ref openedFiles = []
 
-  @observable currentFile = -1
+  @observable currentFileIndex = -1
 
   constructor() {
     this.openedFiles = [
@@ -100,20 +100,26 @@ class Project {
       new File('/some/file2.js', file2Content.join('\n'))
     ]
 
-    this.currentFile = 0
+    this.currentFileIndex = 0
   }
 
   @action.bound
   changeFile(index) {
-    if (index === this.currentFile) return
-    this.currentFile = index
+    if (index == this.currentFileIndex) return
+    console.log(index)
+    this.currentFileIndex = index
+  }
+
+  @computed
+  get currentFile() {
+    return this.openedFiles[this.currentFileIndex]
   }
 }
 
 const project = new Project()
 
 @observer
-export default class App extends Component {
+class EditorView extends Component {
   textEditorDidMount = (editor, monaco) => {
     // брать theme из props
     monaco.editor.defineTheme('Monokai', Monokai)
@@ -125,6 +131,38 @@ export default class App extends Component {
     file.setDirty()
   }
 
+  render() {
+    const {
+      project: { currentFile }
+    } = this.props
+
+    return (
+      <EditorPane>
+        <ResizeDetector
+          handleWidth
+          handleHeight
+          render={({ width, height }) => {
+            return (
+              <MonacoEditor
+                key="monacoeditor"
+                width={width}
+                height={height}
+                language="javascript"
+                file={currentFile}
+                options={options}
+                onChange={this.onTextChange}
+                editorDidMount={this.textEditorDidMount}
+              />
+            )
+          }}
+        />
+      </EditorPane>
+    )
+  }
+}
+
+@observer
+export default class App extends Component {
   render() {
     return (
       <>
@@ -147,26 +185,7 @@ export default class App extends Component {
               file2.js
             </p>
           </ToolbarStyle>
-          <EditorPane>
-            <ResizeDetector
-              handleWidth
-              handleHeight
-              render={({ width, height }) => {
-                return (
-                  <MonacoEditor
-                    key="monacoeditor"
-                    width={width}
-                    height={height}
-                    language="javascript"
-                    file={project.openedFiles[project.currentFile]}
-                    options={options}
-                    onChange={this.onTextChange}
-                    editorDidMount={this.textEditorDidMount}
-                  />
-                )
-              }}
-            />
-          </EditorPane>
+          <EditorView project={project} />
         </ContainerStyle>
       </>
     )
