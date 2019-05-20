@@ -1,16 +1,13 @@
-import Linter from "eslint4b";
-const linter = new Linter();
+import Linter from 'eslint4b'
+const linter = new Linter()
 
-import eslintRules from "./eslint_rules";
+import eslintRules from './eslint_rules'
 
 self.onmessage = ({ data: { code, version, autofix = false } }) => {
-  let markers;
+  let markers
   try {
     if (autofix) {
-      const { fixed, output, messages } = linter.verifyAndFix(
-        code,
-        eslintRules
-      );
+      const { fixed, output, messages } = linter.verifyAndFix(code, eslintRules)
 
       markers = messages.map(err => ({
         startLineNumber: err.line,
@@ -19,10 +16,10 @@ self.onmessage = ({ data: { code, version, autofix = false } }) => {
         endColumn: err.column,
         message: `${err.message} (${err.ruleId})`,
         severity: 3,
-        source: "ESLint"
-      }));
+        source: 'ESLint'
+      }))
 
-      self.postMessage({ markers, version, output, fixed });
+      self.postMessage({ markers, version, output, fixed })
     } else {
       markers = linter.verify(code, eslintRules).map(err => ({
         startLineNumber: err.line,
@@ -31,12 +28,12 @@ self.onmessage = ({ data: { code, version, autofix = false } }) => {
         endColumn: err.column,
         message: `${err.message} (${err.ruleId})`,
         severity: 3,
-        source: "ESLint"
-      }));
+        source: 'ESLint'
+      }))
 
-      self.postMessage({ markers, version });
+      self.postMessage({ markers, version })
     }
   } catch (e) {
     /* Ignore error */
   }
-};
+}

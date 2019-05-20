@@ -184,6 +184,8 @@ class Project {
 
   @observable currentFileIndex = -1
 
+  @observable.ref cursorPosition = { line: 1, column: 1 }
+
   constructor() {
     this.openedFiles = [
       new File('/some/file1.js', file1Content.join('\n')),
@@ -227,6 +229,11 @@ class Project {
       this.lintCode(true)
     }
   }
+
+  @action
+  setCursorPosition(line, column) {
+    this.cursorPosition = { line, column }
+  }
 }
 
 const project = new Project()
@@ -242,6 +249,21 @@ class EditorView extends Component {
 
   onTextChange = text => {
     this.props.project.setDirtyCurrentFile()
+  }
+
+  onCursorPositionChange = (line, column) => {
+    this.props.project.setCursorPosition(line, column)
+  }
+
+  // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.icodeeditor.html
+  // https://stackoverflow.com/questions/45123386/scroll-to-line-in-monaco-editor
+
+  grabEditor = (editor, monaco) => {
+    // store wherever you want
+  }
+
+  releaseEditor = editor => {
+    // compare editor and unsubscribe
   }
 
   render() {
@@ -265,7 +287,10 @@ class EditorView extends Component {
                 options={options}
                 theme={theme.name}
                 themeDefinition={theme.definition}
+                editorDidMount={this.grabEditor}
+                editorWillUnmount={this.releaseEditor}
                 onChange={this.onTextChange}
+                onCursorPositionChange={this.onCursorPositionChange}
                 lintCode={getLinter}
               />
             )
@@ -285,7 +310,7 @@ class ToolBar extends Component {
 
   render() {
     const {
-      project: { changeFile, openedFiles, fixFormatting }
+      project: { changeFile, openedFiles, fixFormatting, cursorPosition }
     } = this.props
 
     return (
@@ -327,6 +352,12 @@ class ToolBar extends Component {
             )
           })}
         </select>
+        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
+          <p>Ln </p>
+          <p>{cursorPosition.line}, </p>
+          <p>Col </p>
+          <p>{cursorPosition.column}</p>
+        </div>
       </ToolbarStyle>
     )
   }

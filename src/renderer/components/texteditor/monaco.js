@@ -21,18 +21,6 @@ function processSize(size) {
 }
 
 export class MonacoEditor extends Component {
-  // state = {file:null, theme:null}
-
-  // static getDerivedStateFromProps(newProps, oldState) {
-  //   let state = {}
-
-  //   if (oldState.file !== newProps.file) {
-  //     state.file = newProps.file
-  //   }
-
-  //   return state
-  // }
-
   component = null
 
   constructor(props) {
@@ -70,29 +58,40 @@ export class MonacoEditor extends Component {
         model: null
       })
 
+      this.debouncedLinting = debounce(this.lintCode, 1000)
+
       this.__prevent_trigger_change_event = true
       this.editor.setModel(this.file.monacoModel)
+      this.debouncedLinting()
       this.__prevent_trigger_change_event = false
 
-      const { editorDidMount = noop, onChange = noop } = this.props
+      const { editorDidMount = noop, onChange = noop, onCursorPositionChange = noop } = this.props
 
       editorDidMount(this.editor, monaco)
 
-      this.throttledLinting = debounce(this.lintCode, 1000)
-
       // emitted when the content of the current model has changed.
       this.subscriptions.add(
+        this.editor.onDidChangeModel(event => {
+          const { lineNumber, column } = this.editor.getPosition()
+          onCursorPositionChange(lineNumber, column)
+          this.debouncedLinting()
+        }),
+
         this.editor.onDidChangeModelContent(event => {
           // Only invoking when user input changed
           if (!this.__prevent_trigger_change_event) {
             onChange(this.file.monacoModel.getValue(), event)
-            this.throttledLinting()
+            this.debouncedLinting()
           }
+        }),
+
+        this.editor.onDidChangeCursorPosition(event => {
+          const {
+            position: { lineNumber, column }
+          } = event
+          onCursorPositionChange(lineNumber, column)
         })
       )
-
-      // emitted when the cursor position has changed.
-      // onDidChangeCursorPosition
 
       // emitted when the cursor selection has changed.
       // onDidChangeCursorSelection
@@ -115,21 +114,22 @@ export class MonacoEditor extends Component {
       // Returns true if the text inside this editor or an editor widget has focus.
       // hasWidgetFocus
 
-      this.worker.onmessage = ({ data: { markers, version, output } }) => {
-        console.log('GOT LINTER RESPONSE')
+      this.worker.onmessage = ({ data: { markers, version, output, fixed } }) => {
         const model = this.editor.getModel()
         if (model && model.getVersionId() === version) {
-          console.log('versions matched')
-          // model.pushEditOperations(
-          //   [],
-          //   [
-          //     {
-          //       range: model.getFullModelRange(),
-          //       text: output
-          //     }
-          //   ]
-          // );
-          monaco.editor.setModelMarkers(model, 'eslint', markers)
+          if (fixed && output) {
+            model.pushEditOperations(
+              [],
+              [
+                {
+                  range: model.getFullModelRange(),
+                  text: output
+                }
+              ]
+            )
+          } else {
+            monaco.editor.setModelMarkers(model, 'eslint', markers)
+          }
         }
       }
     }
@@ -138,12 +138,18 @@ export class MonacoEditor extends Component {
   componentWillUnmount() {
     console.log('MonacoEditor: componentWillUnmount ', this.uuid)
 
+    const {
+      project: { releaseEditor = noop }
+    } = this.props
+
     this.worker.terminate()
     this.subscriptions.dispose()
     if (typeof this.editor !== 'undefined') {
+      releaseEditor(this.editor)
       this.editor.dispose()
     }
 
+    this.editor = null
     this.component = null
   }
 
@@ -203,11 +209,7 @@ export class MonacoEditor extends Component {
   }
 
   lintCode = (autofix = false) => {
-    console.log('MONCAO LINT CODE')
-    // const model = this.editor.getModel();
-
     const model = this.file.monacoModel
-
     // Reset the markers
     monaco.editor.setModelMarkers(model, 'eslint', [])
 
@@ -228,20 +230,6 @@ export class MonacoEditor extends Component {
   }
 
   render() {
-    console.log('MonacoEditor: render ', this.uuid)
-
-    // const { width = '100%', height = '100%' } = this.props
-    // const style = {
-    //   width: processSize(width),
-    //   height: processSize(height)
-    // }
-
-    // return React.createElement('div', {
-    //   ref: this.containerRef,
-    //   style: style,
-    //   className: 'react-monaco-editor-container'
-    // })
-    // return <RootStyle className="react-monaco-editor-container" ref={this.containerRef} />
     return this.component
   }
 }

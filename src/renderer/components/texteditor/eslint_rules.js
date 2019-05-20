@@ -1,14 +1,16 @@
-import rulesBestPractices from "eslint-config-airbnb-base/rules/best-practices";
-import rulesBestErrors from "eslint-config-airbnb-base/rules/errors";
-import rulesBestStyle from "eslint-config-airbnb-base/rules/style";
-import rulesBestVariables from "eslint-config-airbnb-base/rules/variables";
-import rulesBestEs6 from "eslint-config-airbnb-base/rules/es6";
+import rulesBestPractices from 'eslint-config-airbnb-base/rules/best-practices'
+import rulesBestErrors from 'eslint-config-airbnb-base/rules/errors'
+import rulesBestStyle from 'eslint-config-airbnb-base/rules/style'
+import rulesBestVariables from 'eslint-config-airbnb-base/rules/variables'
+import rulesBestEs6 from 'eslint-config-airbnb-base/rules/es6'
+//import rulesBestNode from 'eslint-config-airbnb-base/rules/node'
+//import rulesBestImports from 'eslint-config-airbnb-base/rules/imports'
 
 export default {
   root: true,
   parserOptions: {
     ecmaVersion: 2018,
-    sourceType: "module",
+    sourceType: 'module',
     ecmaFeatures: {
       jsx: true
     }
@@ -25,7 +27,7 @@ export default {
     ...rulesBestEs6.rules,
 
     indent: [
-      "error",
+      'error',
       2,
       {
         SwitchCase: 1,
@@ -47,33 +49,50 @@ export default {
         ImportDeclaration: 1,
         flatTernaryExpressions: false,
         ignoredNodes: [
-          "JSXElement",
-          "JSXElement > *",
-          "JSXAttribute",
-          "JSXIdentifier",
-          "JSXNamespacedName",
-          "JSXMemberExpression",
-          "JSXSpreadAttribute",
-          "JSXExpressionContainer",
-          "JSXOpeningElement",
-          "JSXClosingElement",
-          "JSXText",
-          "JSXEmptyExpression",
-          "JSXSpreadChild"
+          'JSXElement',
+          'JSXElement > *',
+          'JSXAttribute',
+          'JSXIdentifier',
+          'JSXNamespacedName',
+          'JSXMemberExpression',
+          'JSXSpreadAttribute',
+          'JSXExpressionContainer',
+          'JSXOpeningElement',
+          'JSXClosingElement',
+          'JSXText',
+          'JSXEmptyExpression',
+          'JSXSpreadChild'
         ],
         ignoreComments: false
       }
     ],
-    semi: ["error", "never"],
-    "comma-dangle": ["error", "never"],
-    quotes: [1, "single", "avoid-escape"],
-    "class-methods-use-this": 0,
-    "prefer-destructuring": [
-      "error",
+    semi: ['error', 'never'],
+    'comma-dangle': ['error', 'never'],
+    quotes: [1, 'single', 'avoid-escape'],
+    'class-methods-use-this': 0,
+    'max-len': ['error', { code: 120 }],
+    'object-curly-newline': [
+      'error',
+      {
+        ObjectExpression: 'always',
+        ObjectPattern: { multiline: true },
+        ImportDeclaration: 'never',
+        ExportDeclaration: { multiline: true, minProperties: 3 }
+      }
+    ],
+    'object-property-newline': [
+      'error',
+      {
+        allowAllPropertiesOnSameLine: true
+      }
+    ],
+    'no-plusplus': ['error'],
+    'prefer-destructuring': [
+      'error',
       {
         object: true,
         array: false
       }
     ]
   }
-};
+}
